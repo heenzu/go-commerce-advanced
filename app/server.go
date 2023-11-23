@@ -29,6 +29,7 @@ func Run() {
 	appConfig.AppName = getEnv("APP_NAME", "GoCommerce")
 	appConfig.AppEnv = getEnv("APP_ENV", "Development")
 	appConfig.AppPort = getEnv("APP_PORT", "9000")
+	appConfig.AppURL = getEnv("APP_URL", "http://localhost:9000")
 
 	dbConfig.DBHost = getEnv("DB_HOST", "localhost")
 	dbConfig.DBUser = getEnv("DB_USER", "user")
@@ -45,5 +46,4 @@ func Run() {
 		server.Intialize(appConfig, dbConfig)
 		server.Run(":" + appConfig.AppPort)
 	}
-
 }

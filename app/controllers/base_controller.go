@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os"
 
@@ -18,12 +19,14 @@ import (
 type Server struct {
 	DB *gorm.DB
 	Router *mux.Router
+	AppConfig *AppConfig
 }
 
 type AppConfig struct {
 	AppName string
 	AppEnv string
 	AppPort string
+	AppURL string
 }
 
 type DBConfig struct {
@@ -35,10 +38,34 @@ type DBConfig struct {
 	DBDriver string
 }
 
+type PageLink struct {
+	Page 		  int32
+	Url 		  string
+	IsCurrentPage bool
+}
+
+type PaginationLinks struct {
+	CurrentPage string
+	NextPage string
+	PrevPage string
+	TotalRows int32
+	TotalPages int32
+	Links []PageLink
+}
+
+type PaginationParams struct {
+	Path string
+	TotalRows int32
+	PerPage int32
+	CurrentPage int32
+}
+
 func (server *Server) Intialize(appConfig AppConfig, dbConfig DBConfig) {
 	fmt.Println("Selamat Datang di " + appConfig.AppName)
 
-	server.IntializeRoutes()
+	server.InitializeDB(dbConfig)
+	server.InitializeAppConfig(appConfig)
+	server.InitializeRoutes()
 }
 
 func (server *Server) Run(addr string) {
@@ -61,6 +88,10 @@ func (server *Server) InitializeDB(dbConfig DBConfig) {
 	if err != nil {
 		panic("Gagal dalam menghubungkan database server")
 	}
+}
+
+func (server *Server) InitializeAppConfig(appconfig AppConfig) {
+	server.AppConfig = &appconfig
 }
 
 func (server *Server) dbMigrate() {
@@ -103,4 +134,41 @@ func (server *Server) InitCommands(config AppConfig, dbConfig DBConfig) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func GetPaginationLinks(config *AppConfig, params PaginationParams) (PaginationLinks, error) {
+	var links []PageLink
+
+	totalPages := int32(math.Ceil(float64(params.TotalRows) / float64(params.PerPage)))
+
+	for i := 1; int32(i) <= totalPages; i++ {
+		links = append(links, PageLink{
+			Page: int32(i),
+			Url: fmt.Sprintf("%s/%s?page=%s", config.AppURL, params.Path, fmt.Sprint(i)),
+			IsCurrentPage: int32(i) == params.CurrentPage,
+		})
+	}
+
+	var nextPage int32
+	var prevPage int32
+
+	prevPage = 1
+	nextPage = totalPages
+
+	if params.CurrentPage > 2 {
+		prevPage = params.CurrentPage - 1
+	}
+
+	if params.CurrentPage < totalPages {
+		nextPage = params.CurrentPage + 1
+	}
+
+	return PaginationLinks{
+		CurrentPage: fmt.Sprintf("%s/%s?page=%s", config.AppURL, params.Path, fmt.Sprint(params.CurrentPage)),
+		NextPage: fmt.Sprintf("%s/%s?page=%s", config.AppURL, params.Path, fmt.Sprint(nextPage)),
+		PrevPage: fmt.Sprintf("%s/%s?page=%s", config.AppURL, params.Path, fmt.Sprint(prevPage)),
+		TotalRows: params.TotalRows,
+		TotalPages: totalPages,
+		Links: links,
+	}, nil
 }
