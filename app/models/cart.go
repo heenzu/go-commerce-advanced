@@ -21,9 +21,7 @@ func (c *Cart) GetCart(db *gorm.DB, cartID string) (*Cart, error) {
 	var err error
 	var cart Cart
 
-	err = db.Debug().Preload("CartItems").
-		Preload("CartItems.Product").
-		Model(Cart{}).Where("id = ?", cartID).First(&cart).Error
+	err = db.Debug().Preload("CartItems").Model(Cart{}).Where("id = ?", cartID).First(&cart).Error
 	if err != nil {
 		return nil, err
 	}

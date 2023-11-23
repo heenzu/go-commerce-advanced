@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
+	"github.com/unrolled/render"
 	"gorm.io/gorm"
 
 	"github.com/heenzu/Go-Commerce/app/models"
@@ -34,13 +35,17 @@ func GetShoppingCart(db *gorm.DB, cartID string) (*models.Cart, error) {
 }
 
 func (server *Server) GetCart(w http.ResponseWriter, r *http.Request) {
+	render := render.New(render.Options{
+		Layout : "layout",
+	})
 	var cart *models.Cart
 
 	cartID := GetShoppingCartID(w, r)
 	cart, _ = GetShoppingCart(server.DB, cartID)
 
-	fmt.Println("cart id ===>", cart.ID)
-	fmt.Println("cart items ===>", cart.CartItems)
+	_ = render.HTML(w, http.StatusOK, "cart", map[string]interface{}{
+		"cart":      cart,
+	})
 }
 
 func (server *Server) AddItemToCart(w http.ResponseWriter, r *http.Request) {
