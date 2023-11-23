@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"github.com/heenzu/Go-Commerce/app/models"
 	"github.com/heenzu/Go-Commerce/database/seeders"
 	"github.com/urfave/cli"
@@ -59,6 +60,9 @@ type PaginationParams struct {
 	PerPage int32
 	CurrentPage int32
 }
+
+var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+var sessionShoppingCart = "shopping-cart-session"
 
 func (server *Server) Intialize(appConfig AppConfig, dbConfig DBConfig) {
 	fmt.Println("Selamat Datang di " + appConfig.AppName)
